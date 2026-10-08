@@ -1,11 +1,11 @@
 ---
 name: creating-hooks
-description: Creates custom React hooks for Debrief. Use when building data-fetching hooks, streaming hooks, or browser-API hooks in apps/web/src/hooks/.
+description: Creates custom React hooks for the dashboard in apps/web. Use when building data-fetching hooks, polling hooks, streaming hooks, or browser-API hooks in apps/web/src/hooks/.
 ---
 
 # Creating Hooks
 
-Custom React hooks for the Debrief web app.
+Custom React hooks for the dashboard (`apps/web`).
 
 ## Directory Structure
 
@@ -21,10 +21,10 @@ The most common pattern — fetches from the API on mount and returns `{ data, l
 ```typescript
 import { useEffect, useState } from 'react';
 
-import type { MyType } from '@debrief/shared';
-import { API_ROUTE } from '@debrief/shared';
+import type { MyType } from '@repo/shared';
+import { API_ROUTE } from '@repo/shared';
 
-import fetchApi from '@/lib/fetchApi';
+import { fetchApi } from '@/lib/fetch-api';
 
 interface UseMyDataResult {
   data: MyType | null;
@@ -32,7 +32,7 @@ interface UseMyDataResult {
   error: string | null;
 }
 
-const useMyData = (): UseMyDataResult => {
+export const useMyData = (): UseMyDataResult => {
   const [data, setData] = useState<MyType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,8 +59,6 @@ const useMyData = (): UseMyDataResult => {
 
   return { data, loading, error };
 };
-
-export default useMyData;
 ```
 
 For array results, initialise with `[]` instead of `null` and type accordingly:
@@ -71,15 +69,15 @@ const [items, setItems] = useState<MyItem[]>([]);
 
 ## Polling Hook Pattern
 
-For data that arrives asynchronously after session start (e.g. background precompute):
+For data that arrives asynchronously after the first request (e.g. the output of a background job):
 
 ```typescript
 import { useCallback, useEffect, useState } from 'react';
 
-import type { MyType } from '@debrief/shared';
-import { API_ROUTE } from '@debrief/shared';
+import type { MyType } from '@repo/shared';
+import { API_ROUTE } from '@repo/shared';
 
-import fetchApi from '@/lib/fetchApi';
+import { fetchApi } from '@/lib/fetch-api';
 
 const POLL_INTERVAL_MS = 1500;
 const POLL_MAX_DURATION_MS = 90000;
@@ -91,7 +89,7 @@ interface UsePolledDataResult {
   refetch: () => void;
 }
 
-const usePolledData = (id: string | undefined): UsePolledDataResult => {
+export const usePolledData = (id: string | undefined): UsePolledDataResult => {
   const [data, setData] = useState<MyType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -151,36 +149,34 @@ const usePolledData = (id: string | undefined): UsePolledDataResult => {
 
   return { data, loading, error, refetch };
 };
-
-export default usePolledData;
 ```
 
 ## Streaming Hook Pattern
 
-For NDJSON streaming endpoints (voice/reflect). Returns a `useCallback` that the caller invokes per turn:
+For NDJSON streaming endpoints (e.g. an AI-generated project summary streamed as text). Returns a `useCallback` that the caller invokes per request:
 
 ```typescript
 import { useCallback } from 'react';
 
-import type { ReflectRequest } from '@debrief/shared';
-import { API_ROUTE } from '@debrief/shared';
+import type { SummaryRequest } from '@repo/shared';
+import { API_ROUTE } from '@repo/shared';
 
-export type StreamResult = { content: string; shouldWrapUp: boolean };
+export type StreamResult = { content: string };
 
-const useMyStream = (sessionId: string | undefined) =>
+export const useSummaryStream = (projectId: string | undefined) =>
   useCallback(
     async (
-      messages: { role: string; content: string }[],
+      prompt: string,
       opts: { onText: (delta: string) => void; signal?: AbortSignal },
     ): Promise<StreamResult | null> => {
-      if (!sessionId) {
+      if (!projectId) {
         return null;
       }
 
       const { onText, signal } = opts;
-      const body = JSON.stringify({ sessionId, messages } satisfies ReflectRequest & { sessionId: string });
+      const body = JSON.stringify({ prompt } satisfies SummaryRequest);
 
-      const res = await fetch(API_ROUTE.VOICE_REFLECT, {
+      const res = await fetch(API_ROUTE.PROJECT_SUMMARY_STREAM.replace(':projectId', projectId), {
         method: 'POST',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
@@ -196,7 +192,6 @@ const useMyStream = (sessionId: string | undefined) =>
       const decoder = new TextDecoder();
       let buffered = '';
       let content = '';
-      let shouldWrapUp = false;
 
       while (true) {
         if (signal?.aborted) {
@@ -221,7 +216,7 @@ const useMyStream = (sessionId: string | undefined) =>
             continue;
           }
 
-          let evt: { type: string; delta?: string; content?: string; shouldWrapUp?: boolean; message?: string };
+          let evt: { type: string; delta?: string; content?: string; message?: string };
 
           try {
             evt = JSON.parse(line) as typeof evt;
@@ -233,41 +228,38 @@ const useMyStream = (sessionId: string | undefined) =>
             onText(evt.delta);
           } else if (evt.type === 'done') {
             content = evt.content ?? '';
-            shouldWrapUp = Boolean(evt.shouldWrapUp);
           } else if (evt.type === 'error') {
             throw new Error(evt.message ?? 'stream error');
           }
         }
       }
 
-      return { content, shouldWrapUp };
+      return { content };
     },
-    [sessionId],
+    [projectId],
   );
-
-export default useMyStream;
 ```
 
 ## Conventions
 
-- **File naming**: `useMyHook.ts` (camelCase, flat file preferred)
-- **Export**: `export default useMyHook` for single-hook files
+- **File naming**: `useMyHook.ts` (camelCase, flat file, one hook per file)
+- **Export**: named export, `export const useMyHook = …`
 - **Result interface**: Define an explicit `UseMyHookResult` interface for data-fetching hooks
-- **Route constants**: Always use `API_ROUTE` from `@debrief/shared` — never hard-code paths
-- **Fetch helper**: Use `fetchApi` from `@/lib/fetchApi` for standard requests (handles credentials, JSON parsing, error throwing)
+- **Route constants**: Always use `API_ROUTE` from `@repo/shared`; never hard-code paths
+- **Fetch helper**: Use `fetchApi` from `@/lib/fetch-api` for standard requests (handles credentials, JSON parsing, error throwing)
 - **Streaming**: Use raw `fetch` with `credentials: 'include'` for NDJSON streaming endpoints
-- **Cleanup**: Always return cleanup functions from useEffect (clear timers, set `cancelled` flags, remove listeners)
+- **Cleanup**: Always return cleanup functions from `useEffect` (clear timers, set `cancelled` flags, remove listeners)
 - **AbortSignal**: Accept `signal?: AbortSignal` for cancellable async operations
-- **Guard clauses**: Return early if required params (like `sessionId`) are undefined
+- **Guard clauses**: Return early if required params (like `projectId`) are undefined
 
 ## Checklist
 
 - [ ] Hook file in `apps/web/src/hooks/useXxx.ts`
-- [ ] Uses `API_ROUTE` from `@debrief/shared` for endpoints
+- [ ] Uses `API_ROUTE` from `@repo/shared` for endpoints
 - [ ] Uses `fetchApi` for standard requests
 - [ ] Explicit result interface for data-fetching hooks
 - [ ] Proper cleanup (cancelled flags, clearTimeout, removeEventListener)
 - [ ] Loading state defaults to `true` for fetch-on-mount hooks
 - [ ] Error state typed as `string | null`
-- [ ] Default export
+- [ ] Named export
 - [ ] Blank line before `if` and `return` statements

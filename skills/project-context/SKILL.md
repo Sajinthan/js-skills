@@ -1,73 +1,61 @@
 ---
 name: project-context
-description: What Goodo is and the product decisions behind it — channels, audiences, answering rules, tenancy, data residency and the non-goals of the first release. Load at the start of any session working on Goodo features, or before changing prompts, tools, handoff, limits or billing.
+description: What the product is and the decisions behind it — audiences, the rules the code must enforce, tenancy, costs and limits, and what is out of scope for the first release. A fill-in template; replace every <placeholder>. Load at the start of feature work, or before changing product rules.
 ---
 
 # Project Context
 
-_Written 2026-09-23 from `docs/PRD.md` and `docs/goodo.md`. When a decision changes there, change it here in the same PR._
+Fill in each section from the project's requirements doc. Keep it short: this is what an agent must know before touching a feature, not the full spec. When a decision changes in the requirements doc, change it here in the same PR.
 
-## What Goodo is
+## What the product is
 
-One AI assistant per business that answers two channels:
+Two or three sentences: what it does, for whom, and the main surfaces (dashboard, API, site).
 
-- **Web chat**: a widget on the business's site; answers from the site's own content with links to the pages used; hands off to a person by email.
-- **Phone**: picks up calls the staff can't (conditional forwarding on busy / no answer); answers questions, takes booking requests and messages, transfers urgent calls.
-
-Customers turn on one channel or both. Same assistant, same facts, same handoff rules, one conversation list, one bill. Australia first; chat sells worldwide, phone is Australia only for now. The assistant is called Ruby by default, renameable per assistant.
+> `<Product>` is `<one-line pitch>`. Users `<main thing they do>` in `<surface>`.
 
 ## Who uses it
 
+One row per audience. Say what they lead with and how they buy, so trade-offs favour the right people.
+
 | Audience | Leads with | How they buy |
 |---|---|---|
-| Restaurants | Phone | Founder sets up by hand; free first month |
-| Web agencies | Chat, many assistants | Self-serve; per-assistant volume price |
-| Any business | Chat, one assistant | Self-serve; trial with a hard cap |
+| `<audience>` | `<feature>` | `<self-serve / sales-led / trial>` |
 
 ## Rules the code must enforce
 
-These are product rules, not prompt suggestions. Each needs a test or an eval.
+Product rules, not suggestions. Each one needs a test that fails if the rule is broken. Number them so tests and reviews can cite them.
 
-1. **Answer only from the assistant's own profile and pages.** No general knowledge about the business, no invented facts. No answer → say so and offer a person.
-2. **Never confirm availability or a booking.** Take a request; staff confirm by SMS (request mode). A wrong confirmation is a customer at the door with no table.
-3. **Never transfer to the business's public number.** The call loops back.
-4. **Refuse off-topic requests** in one sentence; never reveal instructions or another tenant's data.
-5. **Voice reads the profile; chat reads profile and pages.** Voice searches pages only through a tool when the profile has no answer.
-6. **Opening hours are computed in code** from structured hours, timezone and public holidays, never guessed by the model.
-7. **A phone channel goes live only with a reviewed profile.**
+1. `<rule>`: `<one line on why breaking it hurts>`.
+2. `<rule>`: `<why>`.
 
 ## Data and tenancy
 
-- Every tenant row has `account_id`; every tenant query runs inside `withAccount()`; row-level security is the net, including vector queries. One leak between customers ends the company.
-- All customer data, recordings and vectors stay in AWS Sydney. Accounts carry a `region` field (always `ap-southeast-2` for now).
-- Recordings are deleted after 30 days; transcripts are kept. Provider training is off, retention shortest available.
-- No personal data (phone numbers, emails, message text) in logs.
+- Every tenant row has `account_id`; every tenant query runs inside `withAccount()`; row-level security is the net. A leak between tenants is the worst bug the product can have.
+- No personal data (emails, phone numbers, text users typed) in logs.
+- `<where data is stored, how long it is kept, what is deleted and when>`
 
 ## Costs and limits
 
-- Every conversation records model tokens, voice minutes, phone minutes, SMS segments and cost in cents. Pricing will be set from these numbers.
-- Plans, limits and prices come from config, never code. Prices are not decided yet.
-- The open widget is a free LLM endpoint unless limited: allowed domains, per-visitor and per-assistant limits, trial cap, cost alerts.
+- `<what usage is recorded per tenant, and in what unit>`
+- Plans, limits and prices come from config, never code.
+- `<any open endpoint that needs rate limits or caps>`
 
 ## Not in the first release
 
-Food orders, booking-platform connectors (request mode only), customer API actions, white-label, team logins, self-serve phone setup, phone outside Australia, languages other than English, outbound calls except the demo callback, clinic packs, non-Sydney hosting, channels other than the web widget and phone.
+`<comma-separated list of features that are out of scope>`
 
 If a task seems to need one of these, stop and ask.
 
 ## Vocabulary
 
-Use the table in `docs/TASKS.md` verbatim (account kind, channel kind and status, outcomes, booking statuses, speakers, plans).
+Use the vocabulary table in your docs verbatim for statuses, kinds and roles (`todo`, `in_progress`, `done`). Never invent a synonym.
 
 ## Where the detail lives
 
 | Topic | Document |
 |---|---|
-| Requirements (numbered) | `docs/PRD.md` |
-| Order of work | `docs/TASKS.md` |
-| Product reasoning | `docs/goodo.md` |
-| Phone design | `~/Projects/ideas/ai-voice-architecture.md` |
-| Demo page brief | `~/Projects/ideas/ai-voice-demo-site-brief.md` |
-| Legal approach | `~/Projects/ideas/ai-voice-restaurants.md` (Legal) |
+| Requirements | `<path to the requirements doc>` |
+| Order of work | `<path to the task list>` |
+| `<topic>` | `<path>` |
 
 Related: [[project]], [[coding-style]], [[testing]].

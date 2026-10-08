@@ -1,11 +1,9 @@
 ---
 name: create-skill
-description: Authors a new skill for the Goodo repo — the quality gate, structure and registration. Use when adding a skill, capturing a repeated convention, or the user says "make a skill for this" / "/create-skill".
+description: Authors a new skill for the repo in .claude/skills/ — the quality gate, structure and registration. Use when adding a skill, capturing a repeated convention, or the user says "make a skill for this" / "/create-skill".
 ---
 
 # Create Skill
-
-_Adapted 2026-09-23 from rn-boilerplate `create-skill`._
 
 Skills encode **repo-specific knowledge a model doesn't already have**, so the agent gets it right first time. This skill is how you add one. See [[refine-skill]] to improve an existing one.
 
@@ -20,7 +18,7 @@ If the answer is "how to use Fastify / Prisma / React / Next.js", **stop**. That
 - a **repo convention**: where files live, which package exports what, naming;
 - a **non-obvious wiring**: two files that must stay in sync, a start-up order, a row-level security step;
 - a **gotcha** paid for in real debugging, stated as the fix with the symptom;
-- a **decision** with a rationale the code doesn't state (link `docs/PRD.md` or the ideas docs).
+- a **decision** with a rationale the code doesn't state (link the project's requirements doc).
 
 Subjective rules must become **measurable checks**. "Keep routes thin" is noise; "handlers only parse input and call a service; no Prisma import in `routes/`" is a skill. If a rule can't be made checkable, cut it.
 
@@ -42,7 +40,7 @@ description: <what it does>. Use when <trigger phrases the agent will match on>.
 ---
 ```
 
-The `description` decides whether the agent loads the skill. Lead with what it does, then an explicit **"Use when …"** listing the tasks and phrases that should trigger it. Name the app or package it applies to (`apps/api`, `apps/web`, `packages/engine`) so it doesn't load for the wrong one.
+The `description` decides whether the agent loads the skill. Lead with what it does, then an explicit **"Use when …"** listing the tasks and phrases that should trigger it. Name the app or package it applies to (`apps/api`, `apps/web`, `packages/db`) so it doesn't load for the wrong one.
 
 ## Body: short, scannable, executable
 
@@ -58,7 +56,7 @@ One fact per section. If a section restates what the model knows, delete it.
 
 **No aspirational tooling.** Before committing, grep every path, symbol, env var and script the skill names; run `pnpm typecheck` on any snippet you adapted. A skill that names a flag that doesn't exist is worse than no skill.
 
-Exception while the repo is being built: a skill written ahead of the code must say so in an italic note under the title and name the task in `docs/TASKS.md` after which it gets verified with [[refine-skill]].
+Exception while the repo is being built: a skill written ahead of the code must say so in an italic note under the title and name the task in the project's task list after which it gets verified with [[refine-skill]].
 
 ## Register and verify
 

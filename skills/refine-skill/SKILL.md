@@ -1,18 +1,16 @@
 ---
 name: refine-skill
-description: Improves an existing Goodo skill — catches drift, verifies every claim against the current repo, and tightens it. Use when a skill is stale, wrong or bloated, after a refactor or dependency upgrade, when a skill was written ahead of the code and its task has landed, or the user says "update/fix this skill" / "/refine-skill".
+description: Improves an existing skill in .claude/skills/ — catches drift, verifies every claim against the current repo, and tightens it. Use when a skill is stale, wrong or bloated, after a refactor or dependency upgrade, when a skill was written ahead of the code and its task has landed, or the user says "update/fix this skill" / "/refine-skill".
 ---
 
 # Refine Skill
-
-_Adapted 2026-09-23 from rn-boilerplate `refine-skill`._
 
 Skills rot: a refactor moves a file, an upgrade renames an API, a section collects padding. Refining keeps them **true and tight**. To write a new one, see [[create-skill]].
 
 ## When to refine
 
 - A skill names a file, symbol, env var, script or flag that changed or is gone.
-- A skill carries a "written before the code exists" note and the task it names in `docs/TASKS.md` is checked off.
+- A skill carries a "written before the code exists" note and the task it names in the project's task list is done.
 - The same gotcha was hit **twice**: promote it into the skill.
 - A section restates framework knowledge, duplicates another skill, or describes tooling that doesn't exist.
 - The skill is long enough that the agent skims past the one rule that matters.
@@ -23,7 +21,7 @@ Skills rot: a refactor moves a file, an upgrade renames an API, a section collec
 2. **Verify every concrete claim against the repo.** For each path, symbol, flag or script:
 
    ```bash
-   ls apps/chat/src/routes/widget-chat.ts         # path still exists?
+   ls apps/api/src/routes/projects.ts             # path still exists?
    grep -rn "withAccount" packages/db/src          # symbol still there?
    grep -n '"typecheck"' package.json              # script still named that?
    ```
